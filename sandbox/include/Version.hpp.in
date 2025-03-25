@@ -1,0 +1,7 @@
+#pragma once
+
+namespace SandboxSimulator {
+    constexpr const char* VERSION = "@PROJECT_VERSION@";
+    constexpr const char* PROJECT_NAME = "@PROJECT_NAME@";
+    constexpr const char* BUILD_TYPE = "@CMAKE_BUILD_TYPE@";
+} 
