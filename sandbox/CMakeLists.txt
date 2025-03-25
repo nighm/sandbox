@@ -1,70 +1,71 @@
-cmake_minimum_required(VERSION 3.22.1)
-project(SandboxSimulator VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.15)
+project(PlanetEvolution VERSION 0.3.3)
+
+# 获取当前时间
+execute_process(
+    COMMAND date "+%Y-%m-%d"
+    OUTPUT_VARIABLE CURRENT_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 # 设置C++标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 设置编译选项
-if(MSVC)
-    add_compile_options(/W4 /WX)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+# 设置构建类型
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-# 查找必要的包
-find_package(SFML 2.5 COMPONENTS system window graphics REQUIRED)
-find_package(Box2D REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+# 编译选项
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-g -Wall -Wextra -Wpedantic)
+else()
+    add_compile_options(-O3 -DNDEBUG)
+endif()
 
-# 设置包含目录
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include
-    ${SFML_INCLUDE_DIR}
-    ${BOX2D_INCLUDE_DIRS}
-    ${OPENGL_INCLUDE_DIR}
-    ${GLEW_INCLUDE_DIRS}
+# 添加版本信息
+configure_file(
+    "${PROJECT_SOURCE_DIR}/include/Version.hpp.in"
+    "${PROJECT_BINARY_DIR}/include/Version.hpp"
 )
 
-# 收集源文件
-file(GLOB_RECURSE SOURCES 
-    "src/*.cpp"
-    "src/core/*.cpp"
-    "src/physics/*.cpp"
-    "src/rendering/*.cpp"
-    "src/ui/*.cpp"
-)
+# 添加子目录
+add_subdirectory(src)
+add_subdirectory(tests)
 
-# 创建可执行文件
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-# 链接库
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE
-    sfml-system
-    sfml-window
-    sfml-graphics
-    Box2D
-    ${OPENGL_LIBRARIES}
-    ${GLEW_LIBRARIES}
-)
+# 设置输出目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # 安装规则
-install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION bin
+install(DIRECTORY include/
+    DESTINATION include/planet
+    FILES_MATCHING PATTERN "*.hpp"
 )
 
-# 启用测试
+install(TARGETS planet_evolution
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
+
+# 添加测试
 enable_testing()
 add_subdirectory(tests)
 
-# 复制资源文件
-file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
-
-# 版本信息
-configure_file(
-    ${PROJECT_SOURCE_DIR}/include/Version.hpp.in
-    ${PROJECT_BINARY_DIR}/include/Version.hpp
-) 
+# 添加文档
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+endif() 
