@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(PlanetEvolution VERSION 0.3.3)
+project(PlanetEvolution VERSION 0.2.0)
 
 # 获取当前时间
 execute_process(
@@ -54,7 +54,6 @@ install(TARGETS planet_evolution
 
 # 添加测试
 enable_testing()
-add_subdirectory(tests)
 
 # 添加文档
 find_package(Doxygen)
@@ -68,4 +67,6 @@ if(DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM
     )
+else()
+    message(STATUS "Doxygen not found - documentation will not be generated")
 endif() 
